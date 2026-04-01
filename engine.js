@@ -12,11 +12,9 @@ function buscarArquivo(diretorio, nomeArquivo) {
         const estatistica = fs.statSync(caminhoCompleto);
 
         if (estatistica.isDirectory()) {
-            // Se for pasta, entra nela (Recursão)
             const resultado = buscarArquivo(caminhoCompleto, nomeArquivo);
             if (resultado) return resultado;
         } else if (arquivo === nomeArquivo) {
-            // Se achou o arquivo, retorna o caminho
             return caminhoCompleto;
         }
     }
@@ -35,19 +33,19 @@ function motorHibrido(conteudo) {
         const tag = match[1].toLowerCase();
         const codigoInterno = match[2];
 
+        // O ";" no início de cada bloco impede que o JS tente invocar o resultado anterior
         if (tag === 'javascript' || tag === 'js') {
-            execucaoFinal += `\n// --- [JS Direto] ---\n${codigoInterno}\n`;
+            execucaoFinal += `\n; // --- [JS Direto] ---\n${codigoInterno}\n;`;
         } else {
             const nomeTradutor = `${tag}.js`;
-            // Busca na raiz e subpastas (__dirname garante que comece onde o engine está)
             const caminhoTradutor = buscarArquivo(__dirname, nomeTradutor);
             
             if (caminhoTradutor) {
                 try {
-                    // Limpa o cache do require para permitir atualizações em tempo real se necessário
                     delete require.cache[require.resolve(caminhoTradutor)];
                     const tradutor = require(caminhoTradutor);
-                    execucaoFinal += `\n// --- [Bloco ${tag} Traduzido de: ${path.relative(__dirname, caminhoTradutor)}] ---\n${tradutor(codigoInterno)}\n`;
+                    // Adicionando ";" antes e depois da tradução por segurança
+                    execucaoFinal += `\n; // --- [Bloco ${tag} Traduzido de: ${path.relative(__dirname, caminhoTradutor)}] ---\n${tradutor(codigoInterno)}\n;`;
                 } catch (e) {
                     console.error(`[Erro] Falha ao carregar o tradutor "${tag}":`, e.message);
                 }
@@ -83,6 +81,7 @@ try {
     console.log(`   MOTOR POLIGLOTA - EXECUTANDO: ${arquivoAlvo}`);
     console.log("========================================\n");
 
+    // Agora o código rodará sem tentar invocar logs como funções
     eval(codigoPronto);
 
     console.log("\n========================================");
