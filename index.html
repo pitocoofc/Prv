@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Clima com Open-Meteo</title>
+</head>
+<body>
+
+  <h2>Consultar clima</h2>
+
+  <input type="text" id="cidade" placeholder="Digite a cidade">
+  <button onclick="buscarClima()">Buscar</button>
+
+  <p id="resultado"></p>
+
+  <script>
+    async function buscarClima() {
+      const cidade = document.getElementById("cidade").value;
+
+      try {
+        // 1. Geocoding
+        const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cidade)}&count=1&language=pt&format=json`;
+        const geoRes = await fetch(geoUrl);
+        const geoData = await geoRes.json();
+
+        if (!geoData.results || geoData.results.length === 0) {
+          document.getElementById("resultado").innerText = "Cidade não encontrada.";
+          return;
+        }
+
+        const location = geoData.results[0];
+        const lat = location.latitude;
+        const lon = location.longitude;
+
+        // 2. Clima atual
+        const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code`;
+        const weatherRes = await fetch(weatherUrl);
+        const weatherData = await weatherRes.json();
+
+        const temp = weatherData.current.temperature_2m;
+        const code = weatherData.current.weather_code;
+
+        document.getElementById("resultado").innerText =
+          `Cidade: ${location.name}\n` +
+          `País: ${location.country}\n` +
+          `Temperatura: ${temp}°C\n` +
+          `Weather code: ${code}`;
+
+      } catch (err) {
+        document.getElementById("resultado").innerText = "Erro ao buscar dados.";
+      }
+    }
+  </script>
+
+</body>
+</html>
